@@ -91,6 +91,17 @@ const els = {
   serverWarning: document.getElementById("serverWarning")
 };
 
+function checkElements() {
+  const missing = [];
+  for (const [key, el] of Object.entries(els)) {
+    if (!el) missing.push(key);
+  }
+  if (missing.length) {
+    console.warn("Missing DOM elements:", missing);
+  }
+  return missing.length === 0;
+}
+
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -612,49 +623,57 @@ function addFlavourToLatest(flavour) {
 }
 
 async function completeBill() {
-  const items = cartItems().map((item) => ({ ...item }));
-  if (!items.length) return;
-  const customer = customerDetails();
-  const draft = {
-    customerName: customer.name,
-    customerPhone: customer.phone,
-    items,
-    subtotal: subtotal(),
-    discount: discount(),
-    total: total(),
-    paymentMode: state.paymentMode
-  };
-
-  let bill;
-  if (location.protocol === "file:") {
-    bill = {
-      id: crypto.randomUUID(),
-      billNo: formatBill(state.data.nextBill),
-      token: formatToken(state.data.nextToken),
-      createdAt: new Date().toISOString(),
-      ...draft,
-      status: "Pending"
+  try {
+    const items = cartItems().map((item) => ({ ...item }));
+    if (!items.length) { alert("Please add items to the order"); return; }
+    const customer = customerDetails();
+    const draft = {
+      customerName: customer.name,
+      customerPhone: customer.phone,
+      items,
+      subtotal: subtotal(),
+      discount: discount(),
+      total: total(),
+      paymentMode: state.paymentMode
     };
-    state.data.bills.push(bill);
-    state.data.nextBill += 1;
-    state.data.nextToken += 1;
-    await saveData();
-  } else {
-    const result = await apiRequest("/api/bills", {
-      method: "POST",
-      body: JSON.stringify(draft)
-    });
-    bill = result.bill;
-    state.data = result.data;
-  }
 
-  state.cart = {};
-  els.discountInput.value = 0;
-  els.customerNameInput.value = "";
-  els.customerPhoneInput.value = "";
-  state.lastBill = bill;
-  renderAll();
-  await syncCustomerDisplay(true);
+    let bill;
+    if (location.protocol === "file:") {
+      bill = {
+        id: (() => {
+          if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+          return `bill-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        })(),
+        billNo: formatBill(state.data.nextBill),
+        token: formatToken(state.data.nextToken),
+        createdAt: new Date().toISOString(),
+        ...draft,
+        status: "Pending"
+      };
+      state.data.bills.push(bill);
+      state.data.nextBill += 1;
+      state.data.nextToken += 1;
+      await saveData();
+    } else {
+      const result = await apiRequest("/api/bills", {
+        method: "POST",
+        body: JSON.stringify(draft)
+      });
+      bill = result.bill;
+      state.data = result.data;
+    }
+
+    state.cart = {};
+    els.discountInput.value = 0;
+    els.customerNameInput.value = "";
+    els.customerPhoneInput.value = "";
+    state.lastBill = bill;
+    renderAll();
+    await syncCustomerDisplay(true);
+  } catch (error) {
+    console.error("Error creating bill:", error);
+    alert(`Failed to create bill: ${error.message}`);
+  }
 }
 
 function editBill(id) {
@@ -677,39 +696,44 @@ function editBill(id) {
 }
 
 async function saveEditedBill() {
-  const bill = state.data.bills.find((entry) => entry.id === state.editingBillId);
-  if (!bill) return;
-  const items = cartItems().map((item) => ({ ...item }));
-  if (!items.length) return;
-  const customer = customerDetails();
-  const patch = {
-    items,
-    subtotal: subtotal(),
-    discount: discount(),
-    total: total(),
-    paymentMode: state.paymentMode,
-    customerName: customer.name,
-    customerPhone: customer.phone,
-    editedAt: new Date().toISOString()
-  };
-  Object.assign(bill, patch);
-  if (location.protocol === "file:") {
-    await saveData();
-  } else {
-    const result = await apiRequest(`/api/bills/${bill.id}`, {
-      method: "PATCH",
-      body: JSON.stringify(patch)
-    });
-    state.data = result.data;
+  try {
+    const bill = state.data.bills.find((entry) => entry.id === state.editingBillId);
+    if (!bill) { alert("Bill not found"); return; }
+    const items = cartItems().map((item) => ({ ...item }));
+    if (!items.length) { alert("Please add items to the order"); return; }
+    const customer = customerDetails();
+    const patch = {
+      items,
+      subtotal: subtotal(),
+      discount: discount(),
+      total: total(),
+      paymentMode: state.paymentMode,
+      customerName: customer.name,
+      customerPhone: customer.phone,
+      editedAt: new Date().toISOString()
+    };
+    Object.assign(bill, patch);
+    if (location.protocol === "file:") {
+      await saveData();
+    } else {
+      const result = await apiRequest(`/api/bills/${bill.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(patch)
+      });
+      state.data = result.data;
+    }
+    state.cart = {};
+    state.editingBillId = null;
+    els.discountInput.value = 0;
+    els.customerNameInput.value = "";
+    els.customerPhoneInput.value = "";
+    state.lastBill = bill;
+    renderAll();
+    await syncCustomerDisplay(true);
+  } catch (error) {
+    console.error("Save edit error:", error);
+    alert(`Failed to save bill edit: ${error.message}`);
   }
-  state.cart = {};
-  state.editingBillId = null;
-  els.discountInput.value = 0;
-  els.customerNameInput.value = "";
-  els.customerPhoneInput.value = "";
-  state.lastBill = bill;
-  renderAll();
-  await syncCustomerDisplay(true);
 }
 
 async function cancelBill(id) {
@@ -893,56 +917,66 @@ async function acceptSelfOrderPayment(id) {
 }
 
 function exportCsv() {
-  const headers = ["Bill No", "Token", "Date", "Customer Name", "Contact Number", "Items", "Flavours", "Instructions", "Subtotal", "Discount", "Total", "Payment", "Status", "Cancel Reason"];
-  const rows = state.data.bills.map((bill) => [
-    bill.billNo,
-    bill.token,
-    new Date(bill.createdAt).toLocaleString("en-IN"),
-    bill.customerName || "",
-    bill.customerPhone || "",
-    bill.items.map((item) => `${item.qty} x ${item.name}`).join("; "),
-    bill.items.map((item) => item.flavours || "").filter(Boolean).join("; "),
-    bill.items.map((item) => item.instructions || "").filter(Boolean).join("; "),
-    bill.subtotal,
-    bill.discount,
-    bill.total,
-    bill.paymentMode,
-    bill.status,
-    bill.cancelReason || ""
-  ]);
-  const csv = [headers, ...rows]
-    .map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(","))
-    .join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `aaradhna-sales-${todayKey()}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
+  try {
+    const headers = ["Bill No", "Token", "Date", "Customer Name", "Contact Number", "Items", "Flavours", "Instructions", "Subtotal", "Discount", "Total", "Payment", "Status", "Cancel Reason"];
+    const rows = state.data.bills.map((bill) => [
+      bill.billNo,
+      bill.token,
+      new Date(bill.createdAt).toLocaleString("en-IN"),
+      bill.customerName || "",
+      bill.customerPhone || "",
+      bill.items.map((item) => `${item.qty} x ${item.name}`).join("; "),
+      bill.items.map((item) => item.flavours || "").filter(Boolean).join("; "),
+      bill.items.map((item) => item.instructions || "").filter(Boolean).join("; "),
+      bill.subtotal,
+      bill.discount,
+      bill.total,
+      bill.paymentMode,
+      bill.status,
+      bill.cancelReason || ""
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `aaradhna-sales-${todayKey()}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Export error:", error);
+    alert(`Failed to export CSV: ${error.message}`);
+  }
 }
 
 async function closeDay() {
-  const ok = confirm("Close today's billing and start a fresh token sequence?");
-  if (!ok) return;
-  if (location.protocol === "file:") {
-    if (state.data.bills.length) {
-      state.data.history[state.data.date] = state.data.bills;
+  try {
+    const ok = confirm("Close today's billing and start a fresh token sequence?");
+    if (!ok) return;
+    if (location.protocol === "file:") {
+      if (state.data.bills.length) {
+        state.data.history[state.data.date] = state.data.bills;
+      }
+      state.data = {
+        date: todayKey(),
+        nextToken: 1,
+        nextBill: state.data.nextBill,
+        bills: [],
+        history: state.data.history
+      };
+      await saveData();
+    } else {
+      state.data = await apiRequest("/api/close-day", { method: "POST" });
     }
-    state.data = {
-      date: todayKey(),
-      nextToken: 1,
-      nextBill: state.data.nextBill,
-      bills: [],
-      history: state.data.history
-    };
-    await saveData();
-  } else {
-    state.data = await apiRequest("/api/close-day", { method: "POST" });
+    state.cart = {};
+    state.lastBill = null;
+    renderAll();
+  } catch (error) {
+    console.error("Close day error:", error);
+    alert(`Failed to close day: ${error.message}`);
   }
-  state.cart = {};
-  state.lastBill = null;
-  renderAll();
 }
 
 els.categoryTabs.addEventListener("click", (event) => {
@@ -973,26 +1007,26 @@ els.cartList.addEventListener("input", (event) => {
   void syncCustomerDisplay();
 });
 
-els.flavourPicker.addEventListener("click", (event) => {
+els.flavourPicker?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-flavour]");
   if (!button) return;
   addFlavourToLatest(button.dataset.flavour);
 });
 
-els.customFlavourBtn.addEventListener("click", () => {
+els.customFlavourBtn?.addEventListener("click", () => {
   const flavour = els.customFlavourInput.value.trim();
   if (!flavour) return;
   addFlavourToLatest(flavour);
   els.customFlavourInput.value = "";
 });
 
-els.customFlavourInput.addEventListener("keydown", (event) => {
+els.customFlavourInput?.addEventListener("keydown", (event) => {
   if (event.key !== "Enter") return;
   event.preventDefault();
-  els.customFlavourBtn.click();
+  els.customFlavourBtn?.click();
 });
 
-els.paymentModes.addEventListener("click", (event) => {
+els.paymentModes?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-mode]");
   if (!button) return;
   state.paymentMode = button.dataset.mode;
@@ -1016,15 +1050,29 @@ document.addEventListener("click", (event) => {
   if (cancelButton) cancelBill(cancelButton.dataset.cancel);
 });
 
-els.searchInput.addEventListener("input", renderItems);
-els.discountInput.addEventListener("input", renderCart);
-els.customerNameInput.addEventListener("input", () => void syncCustomerDisplay());
-els.customerPhoneInput.addEventListener("input", () => void syncCustomerDisplay());
-els.completeBillBtn.addEventListener("click", completeBill);
-els.saveEditBtn.addEventListener("click", saveEditedBill);
-els.printNewTokenBtn.addEventListener("click", () => printBill(state.lastBill || state.data.bills.at(-1)));
-els.whatsappLastBtn.addEventListener("click", () => sendWhatsAppBill(state.lastBill || state.data.bills.at(-1)));
-els.clearOrderBtn.addEventListener("click", () => {
+els.searchInput?.addEventListener("input", renderItems);
+els.discountInput?.addEventListener("input", renderCart);
+els.customerNameInput?.addEventListener("input", () => void syncCustomerDisplay());
+els.customerPhoneInput?.addEventListener("input", () => void syncCustomerDisplay());
+els.completeBillBtn?.addEventListener("click", completeBill);
+els.saveEditBtn?.addEventListener("click", saveEditedBill);
+els.printNewTokenBtn?.addEventListener("click", () => {
+  try {
+    printBill(state.lastBill || state.data.bills.at(-1));
+  } catch (e) {
+    console.error("Print error:", e);
+    alert("Failed to print token");
+  }
+});
+els.whatsappLastBtn?.addEventListener("click", () => {
+  try {
+    sendWhatsAppBill(state.lastBill || state.data.bills.at(-1));
+  } catch (e) {
+    console.error("WhatsApp error:", e);
+    alert("Failed to send WhatsApp");
+  }
+});
+els.clearOrderBtn?.addEventListener("click", () => {
   state.cart = {};
   state.editingBillId = null;
   els.discountInput.value = 0;
@@ -1032,10 +1080,17 @@ els.clearOrderBtn.addEventListener("click", () => {
   els.customerPhoneInput.value = "";
   renderCart();
 });
-els.printLastBtn.addEventListener("click", () => printBill(state.lastBill || state.data.bills.at(-1)));
-els.exportBtn.addEventListener("click", exportCsv);
-els.resetDayBtn.addEventListener("click", closeDay);
-els.viewTabs.addEventListener("click", (event) => {
+els.printLastBtn?.addEventListener("click", () => {
+  try {
+    printBill(state.lastBill || state.data.bills.at(-1));
+  } catch (e) {
+    console.error("Print error:", e);
+    alert("Failed to print token");
+  }
+});
+els.exportBtn?.addEventListener("click", exportCsv);
+els.resetDayBtn?.addEventListener("click", closeDay);
+els.viewTabs?.addEventListener("click", (event) => {
   const tab = event.target.closest("[data-view]");
   if (!tab) return;
   switchView(tab.dataset.view);
@@ -1045,6 +1100,13 @@ async function init() {
   if (location.protocol === "file:" && els.serverWarning) {
     els.serverWarning.hidden = false;
   }
+  
+  // Check for missing elements
+  const allPresent = checkElements();
+  if (!allPresent) {
+    console.error("Some DOM elements are missing. Check the HTML file.");
+  }
+  
   await loadMenu();
   await loadFlavours();
   await refreshData();
