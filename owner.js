@@ -3,6 +3,12 @@ const itemSales = document.getElementById("itemSales");
 const paymentSales = document.getElementById("paymentSales");
 const customerList = document.getElementById("customerList");
 const cancelledList = document.getElementById("cancelledList");
+const qrPreview = document.getElementById("qrPreview");
+const qrLabel = document.getElementById("qrLabel");
+const upiText = document.getElementById("upiText");
+const qrImageUpload = document.getElementById("qrImageUpload");
+const saveQrBtn = document.getElementById("saveQrBtn");
+const resetQrBtn = document.getElementById("resetQrBtn");
 const money = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 
 async function loadData() {
@@ -71,7 +77,102 @@ function render(data) {
 
 async function init() {
   render(await loadData());
+  await loadQrSettings();
   setInterval(async () => render(await loadData()), 3000);
 }
+
+async function loadQrSettings() {
+  try {
+    const data = await loadData();
+    const display = data.display || {};
+    qrLabel.value = display.paymentQrLabel || "Scan For UPI Payment";
+    upiText.value = display.paymentQrText || "upi://pay?pa=aaradhna@upi&pn=Aaradhna%20Ice%20Dish%20%26%20Gola&cu=INR";
+    updateQrPreview(display.paymentQrImage || null, display.paymentQrText);
+  } catch (error) {
+    console.warn("Could not load QR settings", error);
+  }
+}
+
+function updateQrPreview(imageData, upiTextValue) {
+  if (imageData) {
+    qrPreview.src = imageData;
+  } else {
+    const data = encodeURIComponent(upiTextValue || "upi://pay?pa=aaradhna@upi&pn=Aaradhna%20Ice%20Dish%20%26%20Gola&cu=INR");
+    qrPreview.src = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=0&data=${data}`;
+  }
+}
+
+saveQrBtn.addEventListener("click", async () => {
+  const label = qrLabel.value.trim();
+  const upi = upiText.value.trim();
+  
+  let imageData = null;
+  if (qrImageUpload.files.length > 0) {
+    const file = qrImageUpload.files[0];
+    imageData = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.readAsDataURL(file);
+    });
+  }
+  
+  try {
+    const response = await fetch("/api/qr-settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        paymentQrLabel: label || "Scan For UPI Payment",
+        paymentQrText: upi || "upi://pay?pa=aaradhna@upi&pn=Aaradhna%20Ice%20Dish%20%26%20Gola&cu=INR",
+        paymentQrImage: imageData
+      })
+    });
+    
+    if (!response.ok) throw new Error("Failed to save QR settings");
+    alert("QR settings saved successfully!");
+    qrImageUpload.value = "";
+    updateQrPreview(imageData, upi);
+  } catch (error) {
+    alert("Error saving QR settings: " + error.message);
+  }
+});
+
+resetQrBtn.addEventListener("click", async () => {
+  if (!confirm("Reset QR settings to default?")) return;
+  
+  try {
+    const response = await fetch("/api/qr-settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        paymentQrLabel: "Scan For UPI Payment",
+        paymentQrText: "upi://pay?pa=aaradhna@upi&pn=Aaradhna%20Ice%20Dish%20%26%20Gola&cu=INR",
+        paymentQrImage: null
+      })
+    });
+    
+    if (!response.ok) throw new Error("Failed to reset QR settings");
+    alert("QR settings reset to default!");
+    await loadQrSettings();
+  } catch (error) {
+    alert("Error resetting QR settings: " + error.message);
+  }
+});
+
+qrImageUpload.addEventListener("change", () => {
+  if (qrImageUpload.files.length > 0) {
+    const file = qrImageUpload.files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      updateQrPreview(e.target.result, upiText.value);
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+upiText.addEventListener("input", () => {
+  if (!qrImageUpload.files.length) {
+    updateQrPreview(null, upiText.value);
+  }
+});
 
 init();

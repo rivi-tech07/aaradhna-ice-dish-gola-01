@@ -268,6 +268,20 @@ module.exports = async (req, res) => {
       return sendJson(res, 200, data.display);
     }
 
+    if (req.method === "PUT" && pathname === "/api/qr-settings") {
+      const settings = await readBody(req);
+      const data = await getData(db);
+      data.display = {
+        ...(data.display || defaultDisplay()),
+        paymentQrLabel: settings.paymentQrLabel || "Scan For UPI Payment",
+        paymentQrText: settings.paymentQrText || "upi://pay?pa=aaradhna@upi&pn=Aaradhna%20Ice%20Dish%20%26%20Gola&cu=INR",
+        paymentQrImage: settings.paymentQrImage || null,
+        updatedAt: new Date().toISOString()
+      };
+      await saveData(db, data);
+      return sendJson(res, 200, data.display);
+    }
+
     if (req.method === "POST" && pathname === "/api/bills") {
       const draft = await readBody(req);
       const data = await getData(db);

@@ -15,6 +15,8 @@ const defaultDisplay = {
   items: [],
   message: "Welcome to Aaradhna Ice Dish & Gola",
   paymentQrText: "upi://pay?pa=aaradhna@upi&pn=Aaradhna%20Ice%20Dish%20%26%20Gola&cu=INR",
+  paymentQrImage: null,
+  paymentQrLabel: "Scan For UPI Payment",
   billNo: "",
   token: ""
 };
@@ -29,6 +31,7 @@ const els = {
   tokenNumber: document.getElementById("tokenNumber"),
   billNumber: document.getElementById("billNumber"),
   qrImage: document.getElementById("qrImage"),
+  qrLabel: document.getElementById("qrLabel"),
   itemCountPill: document.getElementById("itemCountPill"),
   orderList: document.getElementById("orderList"),
   customerName: document.getElementById("customerName"),
@@ -109,7 +112,8 @@ function render(display) {
   els.itemCountPill.textContent = `${view.itemCount || 0} items`;
   els.subtotalAmount.textContent = money.format(Number(view.subtotal || 0));
   els.discountAmount.textContent = money.format(Number(view.discount || 0));
-  els.totalAmount.textContent = money.format(Number(view.total || 0));
+  els.toLabel.textContent = view.paymentQrLabel || "Scan For UPI Payment";
+  els.qrImage.src = view.paymentQrImage ||extContent = money.format(Number(view.total || 0));
   els.qrImage.src = qrUrl(view.paymentQrText);
 
   if (!Array.isArray(view.items) || !view.items.length) {

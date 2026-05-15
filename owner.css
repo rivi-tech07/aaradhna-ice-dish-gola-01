@@ -299,6 +299,81 @@ th {
   font-weight: 950;
 }
 
+.qr-settings-section {
+  margin-top: 14px;
+}
+
+.qr-settings-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.qr-preview {
+  text-align: center;
+  padding: 14px;
+  background: var(--wash);
+  border-radius: 8px;
+  margin-bottom: 18px;
+}
+
+.qr-preview p {
+  margin: 0 0 12px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.qr-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="file"] {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.form-group small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+#saveQrBtn {
+  background: var(--blue);
+  color: var(--blue-strong);
+  border: 1px solid var(--blue-strong);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#resetQrBtn {
+  background: var(--rose);
+  color: var(--rose-strong);
+  border: 1px solid var(--rose-strong);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 @media (max-width: 850px) {
   .owner {
     padding: 10px;

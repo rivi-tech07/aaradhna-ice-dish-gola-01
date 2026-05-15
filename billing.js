@@ -113,7 +113,9 @@ function fallbackData() {
       total: 0,
       items: [],
       message: "Welcome to Aaradhna Ice Dish & Gola",
-      paymentQrText: "upi://pay?pa=aaradhna@upi&pn=Aaradhna%20Ice%20Dish%20%26%20Gola&cu=INR"
+      paymentQrText: "upi://pay?pa=aaradhna@upi&pn=Aaradhna%20Ice%20Dish%20%26%20Gola&cu=INR",
+      paymentQrImage: null,
+      paymentQrLabel: "Scan For UPI Payment"
     }
   };
 }
@@ -257,6 +259,9 @@ function displayPayload() {
   const activeSubtotal = draftItems.length ? subtotal() : state.lastBill?.subtotal || 0;
   const activeDiscount = draftItems.length ? discount() : state.lastBill?.discount || 0;
   const activeTotal = draftItems.length ? total() : state.lastBill?.total || 0;
+  
+  const currentDisplay = state.data.display || {};
+  
   return {
     mode: draftItems.length ? (state.editingBillId ? "editing" : "billing") : state.lastBill ? "bill-created" : "idle",
     customerName: activeCustomerName,
@@ -272,7 +277,10 @@ function displayPayload() {
       ? "Please check your order on the screen"
       : state.lastBill
       ? `Token ${state.lastBill.token} generated`
-      : "Welcome to Aaradhna Ice Dish & Gola"
+      : "Welcome to Aaradhna Ice Dish & Gola",
+    paymentQrText: currentDisplay.paymentQrText || "upi://pay?pa=aaradhna@upi&pn=Aaradhna%20Ice%20Dish%20%26%20Gola&cu=INR",
+    paymentQrImage: currentDisplay.paymentQrImage || null,
+    paymentQrLabel: currentDisplay.paymentQrLabel || "Scan For UPI Payment"
   };
 }
 
