@@ -1,36 +1,26 @@
 {
+  "buildCommand": "echo 'Static site'",
+  "outputDirectory": ".",
+  "public": true,
+  "functions": {
+    "api/index.js": {
+      "runtime": "nodejs22.x"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/:path*",
       "destination": "/api/index.js"
+    }
+  ],
+  "routes": [
+    {
+      "src": "^/api/.*$",
+      "dest": "/api/index.js"
     },
     {
-      "source": "/",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/customer",
-      "destination": "/customer.html"
-    },
-    {
-      "source": "/display",
-      "destination": "/display.html"
-    },
-    {
-      "source": "/prep",
-      "destination": "/prep.html"
-    },
-    {
-      "source": "/kitchen",
-      "destination": "/kitchen.html"
-    },
-    {
-      "source": "/owner",
-      "destination": "/owner.html"
-    },
-    {
-      "source": "/menu",
-      "destination": "/menu.html"
+      "src": "^/(.*)$",
+      "dest": "/$1"
     }
   ]
 }
