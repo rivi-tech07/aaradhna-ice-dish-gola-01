@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Aaradhna Customer Display</title>
+    <link rel="stylesheet" href="display.css">
+  </head>
+  <body>
+    <main class="display-shell">
+      <section class="hero-panel">
+        <header class="display-header">
+          <div class="brand">
+            <img src="assets/aaradhna-logo.png" alt="Aaradhna Ice Dish & Gola logo">
+            <div>
+              <p>Aaradhna Ice Dish & Gola</p>
+              <h1>Customer Display</h1>
+            </div>
+          </div>
+          <div class="clock-block">
+            <span id="screenDate">--</span>
+            <strong id="screenTime">--:--</strong>
+          </div>
+        </header>
+
+        <section class="bill-stage">
+          <div class="stage-copy">
+            <p class="stage-label" id="stageLabel">WELCOME</p>
+            <h2 id="headline">Welcome to Aaradhna Ice Dish & Gola</h2>
+            <p id="subline">Your order details will appear here on the second screen.</p>
+            <div class="token-strip" id="tokenStrip" hidden>
+              <div>
+                <span>Token</span>
+                <strong id="tokenNumber">---</strong>
+              </div>
+              <div>
+                <span>Bill</span>
+                <strong id="billNumber">---</strong>
+              </div>
+            </div>
+          </div>
+
+          <aside class="qr-panel">
+            <p>Scan For UPI Payment</p>
+            <img id="qrImage" alt="UPI QR code">
+            <strong>Pay At Counter</strong>
+            <span>Show screenshot after payment if needed</span>
+          </aside>
+        </section>
+      </section>
+
+      <section class="content-grid">
+        <section class="order-panel">
+          <div class="panel-head">
+            <h3>Current Order</h3>
+            <span id="itemCountPill">0 items</span>
+          </div>
+          <div class="order-list" id="orderList"></div>
+        </section>
+
+        <section class="summary-panel">
+          <div class="customer-card">
+            <span>Customer</span>
+            <strong id="customerName">Walk-in Customer</strong>
+          </div>
+          <div class="summary-card">
+            <div><span>Subtotal</span><strong id="subtotalAmount">₹0</strong></div>
+            <div><span>Discount</span><strong id="discountAmount">₹0</strong></div>
+            <div class="grand-row"><span>Total</span><strong id="totalAmount">₹0</strong></div>
+          </div>
+          <div class="footer-note">
+            <strong>Pay at counter. Token starts after payment acceptance.</strong>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="display.js"></script>
+  </body>
+</html>

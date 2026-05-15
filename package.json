@@ -1,0 +1,13 @@
+{
+  "name": "aaradhna-ice-dish-gola",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node server.js",
+    "serve:local": "node server.js",
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}

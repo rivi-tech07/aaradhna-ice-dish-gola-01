@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Aaradhna Self Order</title>
+    <link rel="stylesheet" href="customer.css">
+  </head>
+  <body>
+    <main class="customer-app">
+      <header class="customer-header">
+        <div class="brand-wrap">
+          <img src="assets/aaradhna-logo.png" alt="Aaradhna Ice Dish & Gola logo">
+          <div>
+            <p>Aaradhna Ice Dish & Gola</p>
+            <h1>Self Order</h1>
+          </div>
+        </div>
+        <div class="header-note">Pay at Counter</div>
+      </header>
+
+      <section id="orderView">
+        <section class="intro-card">
+          <div>
+            <p class="intro-kicker">Fast Mobile Order</p>
+            <h2>Choose items, flavours, and show at counter</h2>
+            <span>Token starts only after payment is accepted.</span>
+          </div>
+          <div class="intro-badges">
+            <span>2 flavours</span>
+            <span>Live total</span>
+            <span>Quick pickup</span>
+          </div>
+        </section>
+
+        <section class="card-block customer-form">
+          <div class="section-title">
+            <h3>Your Details</h3>
+            <span>Optional but useful</span>
+          </div>
+          <div class="field-row">
+            <input id="customerName" type="text" placeholder="Your name">
+            <input id="customerPhone" type="tel" placeholder="Mobile number">
+          </div>
+        </section>
+
+        <section class="card-block">
+          <div class="section-title">
+            <h3>Select Items</h3>
+            <span>Choose one section</span>
+          </div>
+          <div class="menu-category-tabs" id="menuCategoryTabs"></div>
+          <div class="customer-menu" id="customerMenu"></div>
+        </section>
+
+        <section class="card-block">
+          <div class="section-title">
+            <h3>Your Cart</h3>
+            <span>Change quantity or flavours</span>
+          </div>
+          <div class="customer-cart" id="customerCart"></div>
+        </section>
+
+        <section class="card-block">
+          <label class="notes-block">
+            <span>Instruction</span>
+            <input id="customerInstruction" type="text" placeholder="Half Mango + Kala Khatta">
+          </label>
+        </section>
+
+        <div class="checkout-dock">
+          <div class="payment-box">
+            <div class="counter-pay-box">
+              <strong>Pay at Counter</strong>
+              <p>Your order goes to cashier first. Token comes after payment acceptance.</p>
+            </div>
+            <div class="totals one-line">
+              <div><span>Total</span><strong id="customerTotal">₹0</strong></div>
+              <div><span>Waiting Time</span><strong>8 min</strong></div>
+            </div>
+            <button class="primary-button" id="placeOrderBtn" type="button">Place Order</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="statusView" hidden>
+        <div class="status-card">
+          <p id="customerStatusLabel">Payment pending</p>
+          <h2 id="customerStatusTitle">Waiting for payment acceptance</h2>
+          <div class="status-token" id="customerToken">--</div>
+          <p id="customerStatusSub">Please show this screen at the counter.</p>
+        </div>
+      </section>
+    </main>
+    <script src="customer.js"></script>
+  </body>
+</html>
