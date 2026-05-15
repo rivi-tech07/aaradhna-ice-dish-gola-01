@@ -45,6 +45,10 @@ Add these in Vercel project settings:
 - `FIREBASE_CLIENT_EMAIL`
 - `FIREBASE_PRIVATE_KEY`
 
+Or easier, add only one variable:
+
+- `FIREBASE_SERVICE_ACCOUNT_JSON`
+
 For the private key, keep the full key including:
 
 ```text
@@ -52,6 +56,11 @@ For the private key, keep the full key including:
 ...
 -----END PRIVATE KEY-----
 ```
+
+If Vercel is difficult with the long private key box, use this simpler option:
+
+- Name: `FIREBASE_SERVICE_ACCOUNT_JSON`
+- Value: paste the full Firebase service-account JSON as one line
 
 ### 3. Deploy
 
