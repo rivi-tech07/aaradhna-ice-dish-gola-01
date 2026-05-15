@@ -832,13 +832,64 @@ async function updateStatus(id, status) {
 }
 
 async function acceptSelfOrderPayment(id) {
-  if (location.protocol === "file:") return;
-  const result = await apiRequest(`/api/self-orders/${id}/accept-payment`, { method: "POST" });
-  state.data = result.data;
-  state.lastBill = result.bill;
-  beep();
-  speak(`Token ${result.bill.token} created.`);
-  renderAll();
+  try {
+    if (location.protocol === "file:") {
+      // Fallback for local testing
+      const data = state.data;
+      const order = data.selfOrders.find((order) => order.id === id);
+      if (!order) { alert("Order not found"); return; }
+      if (order.billId) { alert("Token already created for this order"); return; }
+      
+      const bill = {
+        id: (() => {
+          if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+          return `bill-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        })(),
+        billNo: formatBill(data.nextBill),
+        token: formatToken(data.nextToken),
+        createdAt: new Date().toISOString(),
+        customerName: order.customerName || "",
+        customerPhone: order.customerPhone || "",
+        items: order.items || [],
+        subtotal: Number(order.subtotal || 0),
+        discount: 0,
+        total: Number(order.total || 0),
+        paymentMode: order.paymentMode || "Cash",
+        status: "Pending",
+        source: "Self Order"
+      };
+      
+      data.bills.push(bill);
+      data.nextBill += 1;
+      data.nextToken += 1;
+      order.paymentStatus = "Accepted";
+      order.status = "Token Created";
+      order.token = bill.token;
+      order.billNo = bill.billNo;
+      order.billId = bill.id;
+      order.acceptedAt = new Date().toISOString();
+      
+      localStorage.setItem("aaradhnaBilling", JSON.stringify(data));
+      state.data = data;
+      state.lastBill = bill;
+      beep();
+      speak(`Token ${bill.token} created.`);
+      renderAll();
+      return;
+    }
+    
+    const result = await apiRequest(`/api/self-orders/${id}/accept-payment`, { method: "POST" });
+    if (!result.bill) { alert("Failed to create token"); return; }
+    
+    state.data = result.data;
+    state.lastBill = result.bill;
+    beep();
+    speak(`Token ${result.bill.token} created.`);
+    renderAll();
+  } catch (error) {
+    console.error("Error accepting payment:", error);
+    alert(`Failed to create token: ${error.message}`);
+  }
 }
 
 function exportCsv() {
